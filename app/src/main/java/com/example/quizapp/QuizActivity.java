@@ -1,11 +1,11 @@
 package com.example.quizapp;
-
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
 
 public class QuizActivity extends AppCompatActivity implements View.OnClickListener {
@@ -48,23 +48,10 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
         displayQuestion();
     }
 
-
-
-
     private void loadQuestions(String[] questionsArray, String[][] choicesArray, String[] correctAnswersArray) {
         this.questionsArray = questionsArray;
         choices = choicesArray;
         correctAnswers = correctAnswersArray;
-    }
-
-    private void shuffleAllChoices() {
-        for (int i = 0; i < choices.length; i++) {
-            shuffleChoices(choices[i]);
-        }
-    }
-
-    private void shuffleChoices(String[] arr) {
-        // Your shuffle logic here
     }
 
     private void displayQuestion() {
@@ -75,10 +62,29 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
                 answerButtons[i].setText(choices[currentQuestionIndex][i]);
             }
         } else {
-            // Quiz is complete, show score or perform any other action
-            Toast.makeText(this, "Quiz completed! Your score: " + score, Toast.LENGTH_SHORT).show();
-            finish();
+            // Quiz is complete, show the result summary
+            displayResultSummary();
         }
+    }
+
+    private void displayResultSummary() {
+        // Build the result summary message
+        String resultMessage = "Quiz completed!\nYour score: " + score;
+
+        // Create an AlertDialog to display the result summary
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Quiz Result")
+                .setMessage(resultMessage)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Handle the OK button click if needed
+                        // For example, you can navigate back to the AssessPage
+                        finish();
+                    }
+                })
+                .setCancelable(false) // Prevent dismissing dialog on outside touch or back press
+                .show();
     }
 
     @Override
