@@ -11,8 +11,12 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class QuizActivity extends AppCompatActivity implements View.OnClickListener {
     private Question[] questionsArray;
@@ -24,6 +28,8 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
 
     private TextView questionTextView;
     private Button[] answerButtons;
+    private Set<String> promptedTopics = new HashSet<>();
+
 
     private int currentQuestionIndex = 0;
 
@@ -85,11 +91,31 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
 
         // Build the scores by topics message
         StringBuilder scoresByTopicsMessage = new StringBuilder("Score by Topics:\n");
+
+        // Collect topics that need further study
+        List<String> topicsToStudy = new ArrayList<>();
+
         for (Map.Entry<String, Integer[]> entry : topicScores.entrySet()) {
             String topic = entry.getKey();
             Integer[] topicScore = entry.getValue();
-            scoresByTopicsMessage.append(topic).append(": ").append(topicScore[0]).append("/").append(topicScore[1]).append("\n");
+            int totalQuestionsForTopic = getTotalQuestionsForTopic(topic);
+
+            // Calculate the percentage of mastery
+            double percentage = (double) topicScore[0] / totalQuestionsForTopic * 100;
+
+            scoresByTopicsMessage.append(topic).append(": ")
+                    .append(topicScore[0]).append("/").append(totalQuestionsForTopic)
+                    .append(" (").append(String.format("%.2f", percentage)).append("%)\n");
+
+            // Collect topics that need further study
+            if (percentage < 80) {
+                topicsToStudy.add(topic);
+            }
         }
+
+        // Include the advice message in the result summary
+        String adviceMessage = generateAdviceMessage(topicsToStudy);
+        scoresByTopicsMessage.append("\nAdvise:\n").append(adviceMessage);
 
         // Create an AlertDialog to display the result summary
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -106,6 +132,30 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
                 .setCancelable(false) // Prevent dismissing dialog on outside touch or back press
                 .show();
     }
+
+    private String generateAdviceMessage(List<String> topicsToStudy) {
+        StringBuilder adviceMessage = new StringBuilder();
+
+        if (!topicsToStudy.isEmpty()) {
+            adviceMessage.append("You need to study these topics:\n");
+            for (String topic : topicsToStudy) {
+                adviceMessage.append(topic).append(" (").append(getTopicWebsite(topic)).append(")\n");
+            }
+        } else {
+            adviceMessage.append("Great job! You're doing well in all topics.");
+        }
+
+        return adviceMessage.toString();
+    }
+
+    private String getTopicWebsite(String topic) {
+        // Implement logic to return the website URL based on the topic
+        // For example, you can have a Map<String, String> to store topic-URL mappings
+        // or use a switch statement to handle specific topics
+        // Replace the return statement with your actual logic
+        return "https://example.com";
+    }
+
 
     @Override
     public void onClick(View view) {
