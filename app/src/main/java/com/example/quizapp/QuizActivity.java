@@ -1,4 +1,6 @@
 package com.example.quizapp;
+// QuizActivity.java
+
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -6,18 +8,24 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class QuizActivity extends AppCompatActivity implements View.OnClickListener {
-    private String[] questionsArray;
-    private String[][] choices;
-    private String[] correctAnswers;
+    private Question[] questionsArray;
+    private Map<String, Integer[]> topicScores = new HashMap<>(); // Map to store scores by topic
+
+    private TextView questionNumberTextView;
+
+    private int score = 0;
 
     private TextView questionTextView;
     private Button[] answerButtons;
 
     private int currentQuestionIndex = 0;
-    private int score = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,6 +33,7 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_quiz);
 
         // Initialize views and buttons
+        questionNumberTextView = findViewById(R.id.questionNumber);
         questionTextView = findViewById(R.id.question);
         int[] answerButtonIds = {R.id.ans_A, R.id.ans_B, R.id.ans_C, R.id.ans_D};
         answerButtons = new Button[answerButtonIds.length];
@@ -39,27 +48,30 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
 
         // Load questions based on the chosen subject
         if ("Math".equals(chosenSubject)) {
-            loadQuestions(MathSubject.getMathQuestions(), MathSubject.getMathChoices(), MathSubject.getMathCorrectAnswers());
+            loadQuestions(MathSubject.getMathQuestions());
         } else if ("Science".equals(chosenSubject)) {
-            loadQuestions(ScienceSubject.getScienceQuestions(), ScienceSubject.getScienceChoices(), ScienceSubject.getScienceCorrectAnswers());
+            loadQuestions(ScienceSubject.getScienceQuestions());
         }
 
         // Display the first question
         displayQuestion();
     }
 
-    private void loadQuestions(String[] questionsArray, String[][] choicesArray, String[] correctAnswersArray) {
+    private void loadQuestions(Question[] questionsArray) {
         this.questionsArray = questionsArray;
-        choices = choicesArray;
-        correctAnswers = correctAnswersArray;
     }
 
     private void displayQuestion() {
-        if (currentQuestionIndex < choices.length) {
-            questionTextView.setText(questionsArray[currentQuestionIndex]);
+        if (currentQuestionIndex < questionsArray.length) {
+            // Update question number
+            int questionNumber = currentQuestionIndex + 1;
+            questionNumberTextView.setText("Question " + questionNumber);
+
+            // Update question text
+            questionTextView.setText(questionsArray[currentQuestionIndex].getText());
 
             for (int i = 0; i < answerButtons.length; i++) {
-                answerButtons[i].setText(choices[currentQuestionIndex][i]);
+                answerButtons[i].setText(questionsArray[currentQuestionIndex].getChoices()[i]);
             }
         } else {
             // Quiz is complete, show the result summary
@@ -68,13 +80,21 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void displayResultSummary() {
-        // Build the result summary message
-        String resultMessage = "Quiz completed!\nYour score: " + score;
+        // Build the overall result summary message
+        String overallResultMessage = "Result!\nScore: " + score + "/" + questionsArray.length;
+
+        // Build the scores by topics message
+        StringBuilder scoresByTopicsMessage = new StringBuilder("Score by Topics:\n");
+        for (Map.Entry<String, Integer[]> entry : topicScores.entrySet()) {
+            String topic = entry.getKey();
+            Integer[] topicScore = entry.getValue();
+            scoresByTopicsMessage.append(topic).append(": ").append(topicScore[0]).append("/").append(topicScore[1]).append("\n");
+        }
 
         // Create an AlertDialog to display the result summary
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Quiz Result")
-                .setMessage(resultMessage)
+                .setMessage(overallResultMessage + "\n\n" + scoresByTopicsMessage.toString())
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -92,16 +112,41 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
         Button selectedButton = (Button) view;
         String selectedAnswer = selectedButton.getText().toString();
 
-        if (selectedAnswer.equals(correctAnswers[currentQuestionIndex])) {
+        // Get the topic associated with the current question
+        String currentTopic = questionsArray[currentQuestionIndex].getTopic();
+
+        // Update scores by topic
+        if (!topicScores.containsKey(currentTopic)) {
+            int totalQuestionsForTopic = getTotalQuestionsForTopic(currentTopic);
+            topicScores.put(currentTopic, new Integer[]{0, totalQuestionsForTopic});
+        }
+
+        if (selectedAnswer.equals(questionsArray[currentQuestionIndex].getCorrectAnswer())) {
             // Correct answer
             score++;
+            topicScores.get(currentTopic)[0]++; // Increment correct answers for the current topic
             Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show();
         } else {
             // Incorrect answer
-            Toast.makeText(this, "Incorrect. Correct answer: " + correctAnswers[currentQuestionIndex], Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Incorrect. Correct answer: " + questionsArray[currentQuestionIndex].getCorrectAnswer(), Toast.LENGTH_SHORT).show();
         }
 
         currentQuestionIndex++;
         displayQuestion();
     }
+
+    // Assuming you have a method in your Question class to get the total questions for a specific topic
+    private int getTotalQuestionsForTopic(String topic) {
+        // You need to implement this method based on your data model
+        // For example, you could iterate through questionsArray and count questions for the given topic
+        int count = 0;
+        for (Question question : questionsArray) {
+            if (topic.equals(question.getTopic())) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+
 }
