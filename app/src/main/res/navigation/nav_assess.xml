@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_assess"
+    app:startDestination="@id/assessPage">
+
+    <activity
+        android:id="@+id/quizActivity"
+        android:name="com.example.quizapp.QuizActivity"
+        android:label="activity_quiz"
+        tools:layout="@layout/activity_quiz" />
+    <activity
+        android:id="@+id/assessPage"
+        android:name="com.example.quizapp.AssessPage"
+        android:label="fragment_assess_page"
+        tools:layout="@layout/fragment_assess_page" />
+</navigation>
